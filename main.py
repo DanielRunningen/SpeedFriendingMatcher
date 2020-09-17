@@ -62,7 +62,7 @@ def main(csv: str) -> None:
             print(
                 "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
                 + "  Below are the people that would like to make a friend connection with you and the ways in which they preferred to be contacted."
-                + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
+                + "  If you have further questions don't hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
                 + "  DO NOT RESPOND TO THIS EMAIL."
             )
 
@@ -73,8 +73,8 @@ def main(csv: str) -> None:
         else:
             print(
                 "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
-                + "  Although you didn’t have any direct matches as a result of the event, we encourage you to come to additional events where you can continue to get to know the community and its members."
-                + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
+                + "  Although you didn't have any direct matches as a result of the event, we encourage you to come to additional events where you can continue to get to know the community and its members."
+                + "  If you have further questions don't hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
                 + "  DO NOT RESPOND TO THIS EMAIL.")
 
         print("\n\n-----------------------\n\n\n\n")
