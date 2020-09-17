@@ -38,7 +38,10 @@ def main(csv: str) -> None:
         person = Person(df["Name"][i].lower())
         for method in methods_q:
             if df[method][i] != "":
-                person.add_contact_method(method, df[method][i])
+                if method == "phone":
+                    person.add_contact_method(method, str(int(df[method][i])))
+                else:
+                    person.add_contact_method(method, df[method][i])
         for friend in friends_q:
             if df[friend][i] == "Yes":
                 person.add_potential_friend(friend)
@@ -53,21 +56,28 @@ def main(csv: str) -> None:
 
     # Print the emails
     for person in people.values():
-        print(
-            "SEND TO:\t"
-            + person.contact_methods['email']
-            + "\n\nHello!\n\nThanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
-            + "  Below are the people that would like to make a friend connection with you and the ways in which they preferred to be contacted."
-            + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***).\n\n"
-        )
+        print("***SEND TO:\t" + person.contact_methods['email'] + "***\n\nHello!\n")
 
-        for friend in person.mutual_friends:
-            print(people[friend].name.title() + "\n-----")
-            for method, handle in people[friend].contact_methods.items():
-                print(method.title() + ": " + str(handle))
-            print("\n")
+        if len(person.mutual_friends) > 0:
+            print(
+                "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
+                + "  Below are the people that would like to make a friend connection with you and the ways in which they preferred to be contacted."
+                + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
+                + "  DO NOT RESPOND TO THIS EMAIL."
+            )
 
-        print("-----------------------\n\n\n\n")
+            for friend in person.mutual_friends:
+                print("\n\n" + people[friend].name.title() + "\n-----")
+                for method, handle in people[friend].contact_methods.items():
+                    print(method.title() + ": " + str(handle))
+        else:
+            print(
+                "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
+                + "  Although you didn’t have any direct matches as a result of the event, we encourage you to come to additional events where you can continue to get to know the community and its members."
+                + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
+                + "  DO NOT RESPOND TO THIS EMAIL.")
+
+        print("\n\n-----------------------\n\n\n\n")
 
 # Execute the program
 if len(sys.argv) < 2:
