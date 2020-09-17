@@ -1,50 +1,76 @@
 from person import Person
-import numpy as np
+import sys
 import pandas as pd
 import re
+import itertools
 
 def main(csv: str) -> None:
+    # Load in the CSV of response data and remove the n/a values
     df = pd.read_csv(csv)
     df = df.fillna("")
-    
-    people = list()
-    names = list()
 
-    for header in list(df.columns):
+    # Identify methods of contact and people available for matching
+    methods_q = dict()
+    friends_q = dict()
+    for q in list(df.columns):
         match = None
-        match = re.match(r".*\[(\w+)\]", header)
+        match = re.match(r".*\[([^\]]+)\]", q)
         if match:
-            names.append(match.group(1).lower())
+            friends_q[q] = match.group(1).lower()
+        else:
+            match = re.match(r"(email|facebook|discord|phone|meetup)", q.lower())
+            if match:
+                methods_q[q] = match.group(1).lower()
 
-    for i, record in df.iterrows():
-        person = Person(record["Name"].lower())
-        person.add_contact_method("Email", record["Email Address"])
-        if record["facebook username (what you use in ***REMOVED***):"] != "":
-            person.add_contact_method("Facebook", record["facebook username (what you use in ***REMOVED***):"])
-        if record["discord username (include digits at end of username - ex. #1234):"] != "":
-            person.add_contact_method("Discord", record["discord username (include digits at end of username - ex. #1234):"])
-        if record["phone number for texing (include area code):"] != "":
-            person.add_contact_method("Phone", int(record["phone number for texing (include area code):"]))
-        if record["meetup username:"] != "":
-            person.add_contact_method("Meetup", record["meetup username:"])
+    # Replace the column headers with more reasonable ones
+    df.rename(columns=methods_q, inplace=True)
+    df.rename(columns=friends_q, inplace=True)
 
-        for j, question in enumerate(list(df.columns)[3:-4]):
-            if record[question] == "Yes":
-                person.add_person_of_intrest(names[j])
+    # Convert the question dictionaries into simple lists
+    methods_q = methods_q.values()
+    friends_q = friends_q.values()
 
-        people.append(person)
+    # Convert the table data into Person objects
+    # Organizing them with their name as their reference point in the dictionary
+    #   is redundant information but makes life easier later
+    people = dict()
+    for i in df.index:
+        person = Person(df["Name"][i].lower())
+        for method in methods_q:
+            if df[method][i] != "":
+                person.add_contact_method(method, df[method][i])
+        for friend in friends_q:
+            if df[friend][i] == "Yes":
+                person.add_potential_friend(friend)
+        people[person.name] = person
 
-    for i, pi in enumerate(people):
-        for j, pj in enumerate(people[i+1:]):
-            if pj.name.lower() in pi.people_of_interest and pi.name.lower() in pj.people_of_interest:
-                pi.people_of_shared_interest.add(pj.name.lower())
-                pj.people_of_shared_interest.add(pi.name.lower())
+    # Calculate the matches
+    for person in people.values():
+        for potential_freind in person.potential_friends:
+            if potential_freind in people.keys() and person.name in people[potential_freind].potential_friends and person.name != potential_freind:
+                people[person.name].add_mutual_friend(potential_freind)
+                people[potential_freind].add_mutual_friend(person.name)
 
-    for p in people:
-        print(p.name)
-        print(p.methods_of_contact)
-        print(p.people_of_interest)
-        print(p.people_of_shared_interest)
-        print()
+    # Print the emails
+    for person in people.values():
+        print(
+            "SEND TO:\t"
+            + person.contact_methods['email']
+            + "\n\nHello!\n\nThanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
+            + "  Below are the people that would like to make a friend connection with you and the ways in which they preferred to be contacted."
+            + "  If you have further questions don’t hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***).\n\n"
+        )
 
-main("test_data.csv")
+        for friend in person.mutual_friends:
+            print(people[friend].name.title() + "\n-----")
+            for method, handle in people[friend].contact_methods.items():
+                print(method.title() + ": " + str(handle))
+            print("\n")
+
+        print("-----------------------\n\n\n\n")
+
+# Execute the program
+if len(sys.argv) < 2:
+    print("Useage:\n\tpython3 {0} my_input.csv\n".format(sys.argv[0]))
+else:
+    main(sys.argv[1])

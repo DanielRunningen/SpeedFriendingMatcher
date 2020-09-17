@@ -1,15 +1,15 @@
 class Person:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.methods_of_contact = dict()
-        self.people_of_interest = set()
-        self.people_of_shared_interest = set()
+        self.contact_methods = dict()
+        self.potential_friends = set()
+        self.mutual_friends = set()
 
     def add_contact_method(self, method: str, identifier: str) -> None:
-        self.methods_of_contact[method] = identifier
+        self.contact_methods[method] = identifier
 
-    def add_person_of_intrest(self, person_name: str) -> None:
-        self.people_of_interest.add(person_name)
+    def add_potential_friend(self, person_name: str) -> None:
+        self.potential_friends.add(person_name)
 
-    def add_people_of_shared_interest(self, person_name: str) -> None:
-        self.people_of_shared_interest.add(person_name)
+    def add_mutual_friend(self, person_name: str) -> None:
+        self.mutual_friends.add(person_name)
