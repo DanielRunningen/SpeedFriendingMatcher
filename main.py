@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import itertools
 
-def main(csv: str) -> None:
+def main(csv: str, match_message: str, no_match_message: str) -> None:
     # Load in the CSV of response data and remove the n/a values
     df = pd.read_csv(csv)
     df = df.fillna("")
@@ -54,33 +54,34 @@ def main(csv: str) -> None:
                 people[person.name].add_mutual_friend(potential_freind)
                 people[potential_freind].add_mutual_friend(person.name)
 
+    # Get the text for the matching email
+    message_file = open(match_message, "r")
+    match_message = message_file.read()
+    message_file.close()
+
+    # Get the message for the unmatched email
+    message_file = open(no_match_message, "r")
+    no_match_message = message_file.read()
+    message_file.close()
+
     # Print the emails
     for person in people.values():
-        print("***SEND TO:\t" + person.contact_methods['email'] + "***\n\nHello!\n")
+        print("***SEND TO:\t" + person.contact_methods['email'] + "\t***\n\n")
 
         if len(person.mutual_friends) > 0:
-            print(
-                "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
-                + "  Below are the people that would like to make a friend connection with you and the ways in which they preferred to be contacted."
-                + "  If you have further questions don't hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
-                + "  DO NOT RESPOND TO THIS EMAIL."
-            )
+            print(match_message)
 
             for friend in person.mutual_friends:
                 print("\n\n" + people[friend].name.title() + "\n-----")
                 for method, handle in people[friend].contact_methods.items():
                     print(method.title() + ": " + str(handle))
         else:
-            print(
-                "Thanks for joining ***REMOVED*** for our Virtual Speed Friending event!"
-                + "  Although you didn't have any direct matches as a result of the event, we encourage you to come to additional events where you can continue to get to know the community and its members."
-                + "  If you have further questions don't hesitate to reach out to ***REMOVED*** on facebook, meetup, or discord (***REMOVED***)."
-                + "  DO NOT RESPOND TO THIS EMAIL.")
+            print(no_match_message)
 
         print("\n\n-----------------------\n\n\n\n")
 
 # Execute the program
-if len(sys.argv) < 2:
-    print("Useage:\n\tpython3 {0} my_input.csv\n".format(sys.argv[0]))
+if len(sys.argv) < 4:
+    print("Useage:\n\tpython3 {0} my_input.csv match_message.txt no_match_messge.txt\n".format(sys.argv[0]))
 else:
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
