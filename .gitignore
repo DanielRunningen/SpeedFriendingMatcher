@@ -1,7 +1,11 @@
+# Omit IDE stuff
+.vscode
+
 # Omit raw data files and output
 *.csv
 *.txt
 
+### Taken from https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
