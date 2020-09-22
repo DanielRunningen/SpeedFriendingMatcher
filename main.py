@@ -1,11 +1,17 @@
 from person import Person
 import sys
+import json
 import pandas as pd
 import re
 
-def main(csv: str, match_message: str, no_match_message: str) -> None:
+def main(config: str) -> None:
+    # Load the config
+    config_file = open(config, "r")
+    config = json.load(config_file)
+    config_file.close()
+
     # Load in the CSV of response data and remove the n/a values
-    df = pd.read_csv(csv)
+    df = pd.read_csv(config["csv_path"])
     df = df.fillna("")
 
     # Identify methods of contact and people available for matching
@@ -52,34 +58,33 @@ def main(csv: str, match_message: str, no_match_message: str) -> None:
                 people[person.name].add_mutual_friend(potential_freind)
                 people[potential_freind].add_mutual_friend(person.name)
 
-    # Get the text for the matching email
-    message_file = open(match_message, "r")
-    match_message = message_file.read()
-    message_file.close()
+    # Get the texts for the matching emails
+    match_message = config["messages"]["matched"]
+    no_match_message = config["messages"]["not_matched"]
 
-    # Get the message for the unmatched email
-    message_file = open(no_match_message, "r")
-    no_match_message = message_file.read()
-    message_file.close()
+    # Prepare the output file
+    output = open(config["output_path"], "w")
 
     # Print the emails
     for person in people.values():
-        print("***SEND TO:\t" + person.contact_methods['email'] + "\t***\n\n")
+        output.write("***SEND TO:\t" + person.contact_methods['email'] + "\t***\n\n\n")
 
         if len(person.mutual_friends) > 0:
-            print(match_message)
+            output.write(match_message + "\n")
 
             for friend in person.mutual_friends:
-                print("\n\n" + people[friend].name.title() + "\n-----")
+                output.write("\n\n" + people[friend].name.title() + "\n-----\n")
                 for method, handle in people[friend].contact_methods.items():
-                    print(method.title() + ": " + str(handle))
+                    output.write(method.title() + ": " + str(handle))
         else:
-            print(no_match_message)
+            output.write(no_match_message)
 
-        print("\n\n-----------------------\n\n\n\n")
+        output.write("\n\n\n-----------------------\n\n\n\n")
+    
+    output.close()
 
 # Execute the program
-if len(sys.argv) < 4:
-    print("Useage:\n\tpython3 {0} my_input.csv match_message.txt no_match_messge.txt\n".format(sys.argv[0]))
+if len(sys.argv) < 2:
+    sys.stdout.write(f"useage:\tpython3 {sys.argv[0]} config.json\n")
 else:
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    main(sys.argv[1])

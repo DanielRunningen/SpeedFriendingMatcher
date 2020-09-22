@@ -1,0 +1,8 @@
+{
+    "csv_path" : "./data.csv",
+    "output_path" : "./results.txt",
+    "messages" : {
+        "matched" : "Congradulations, you have matches!",
+        "not_matched" : "Sorry, we didn't find any matches."
+    }
+}
