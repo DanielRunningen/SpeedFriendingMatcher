@@ -2,7 +2,6 @@ from person import Person
 import sys
 import pandas as pd
 import re
-import itertools
 
 def main(csv: str, match_message: str, no_match_message: str) -> None:
     # Load in the CSV of response data and remove the n/a values
@@ -13,7 +12,6 @@ def main(csv: str, match_message: str, no_match_message: str) -> None:
     methods_q = dict()
     friends_q = dict()
     for q in list(df.columns):
-        match = None
         match = re.match(r".*\[([^\]]+)\]", q)
         if match:
             friends_q[q] = match.group(1).lower()
