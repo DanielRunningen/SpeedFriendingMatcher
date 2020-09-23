@@ -6,10 +6,7 @@
             "pre": "Congradulations, you have matches!",
             "post": "\n\n\n-----------------------\n\n\n\n"
         },
-        "not_matched" : {
-            "pre": "Sorry, we didn't find any matches.",
-            "post": "\n\n\n-----------------------\n\n\n\n"
-        }
+        "not_matched" : "Sorry, we didn't find any matches \n\n\n\n-----------------------\n\n\n\n"
     },
     "regex" : {
         "find_name" : ".*\\[([^\\]]+)\\]",

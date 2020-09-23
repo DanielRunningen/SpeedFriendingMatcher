@@ -73,8 +73,7 @@ def main(config: str) -> None:
                     output.write(method.title() + ": " + str(handle))
             output.write(config["messages"]["matched"]["post"] + "\n")
         else:
-            output.write(config["messages"]["not_matched"]["pre"])
-            output.write(config["messages"]["not_matched"]["post"])
+            output.write(config["messages"]["not_matched"])
     
     # Close the output file nicely
     output.close()
