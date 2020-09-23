@@ -2,7 +2,17 @@
     "csv_path" : "./data.csv",
     "output_path" : "./results.txt",
     "messages" : {
-        "matched" : "Congradulations, you have matches!",
-        "not_matched" : "Sorry, we didn't find any matches."
+        "matched" : {
+            "pre": "Congradulations, you have matches!",
+            "post": "\n\n\n-----------------------\n\n\n\n"
+        },
+        "not_matched" : {
+            "pre": "Sorry, we didn't find any matches.",
+            "post": "\n\n\n-----------------------\n\n\n\n"
+        }
+    },
+    "regex" : {
+        "find_name" : ".*\\[([^\\]]+)\\]",
+        "contact_methods" : "(email|facebook|discord|phone|meetup)"
     }
 }

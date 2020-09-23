@@ -5,7 +5,7 @@ import pandas as pd
 import re
 
 def main(config: str) -> None:
-    # Load the config
+    # Load the configs
     config_file = open(config, "r")
     config = json.load(config_file)
     config_file.close()
@@ -18,13 +18,13 @@ def main(config: str) -> None:
     methods_q = dict()
     friends_q = dict()
     for q in list(df.columns):
-        match = re.match(r".*\[([^\]]+)\]", q)
+        match = re.match(re.compile(config["regex"]["find_name"]), q)
         if match:
             friends_q[q] = match.group(1).lower()
-        else:
-            match = re.match(r"(email|facebook|discord|phone|meetup)", q.lower())
-            if match:
-                methods_q[q] = match.group(1).lower()
+            continue
+        match = re.match(re.compile(config["regex"]["contact_methods"]), q.lower())
+        if match:
+            methods_q[q] = match.group(1).lower()
 
     # Replace the column headers with more reasonable ones
     df.rename(columns=methods_q, inplace=True)
@@ -58,10 +58,6 @@ def main(config: str) -> None:
                 people[person.name].add_mutual_friend(potential_freind)
                 people[potential_freind].add_mutual_friend(person.name)
 
-    # Get the texts for the matching emails
-    match_message = config["messages"]["matched"]
-    no_match_message = config["messages"]["not_matched"]
-
     # Prepare the output file
     output = open(config["output_path"], "w")
 
@@ -70,17 +66,17 @@ def main(config: str) -> None:
         output.write("***SEND TO:\t" + person.contact_methods['email'] + "\t***\n\n\n")
 
         if len(person.mutual_friends) > 0:
-            output.write(match_message + "\n")
-
+            output.write(config["messages"]["matched"]["pre"] + "\n")
             for friend in person.mutual_friends:
                 output.write("\n\n" + people[friend].name.title() + "\n-----\n")
                 for method, handle in people[friend].contact_methods.items():
                     output.write(method.title() + ": " + str(handle))
+            output.write(config["messages"]["matched"]["post"] + "\n")
         else:
-            output.write(no_match_message)
-
-        output.write("\n\n\n-----------------------\n\n\n\n")
+            output.write(config["messages"]["not_matched"]["pre"])
+            output.write(config["messages"]["not_matched"]["post"])
     
+    # Close the output file nicely
     output.close()
 
 # Execute the program
