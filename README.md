@@ -51,14 +51,28 @@ This section contains all of the plain text that should sorround the match resul
 
 #### `matched`
 
+This hold two seperate texts, `pre` and `post`, that are used to print around the match results.
+
 ##### `pre`
+
+A text string that prints before the match results are listed for each individual.
 
 ##### `post`
 
+A text string that prints after the match results of each individual.
+
 #### `not_matched`
+
+Place text here to print out messages for individuals who did not recieve any matches.
 
 #### `regex`
 
+This section controls how information is gathered from the survey results.
+
 ##### `find_name`
 
+This expressions should capture the name of a person in the column headers of the `.csv`. Make sure that the name is contained in the first capture group so that it can be used in the comparisons.
+
 ##### `contact_methods`
+
+This expression is simply an `or` list of all the contact methods that a participant can give information for in your survey. Please be sure to include at least `email` so the results can be printed correclty.
