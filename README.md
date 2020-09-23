@@ -1,4 +1,4 @@
-# SpeedFriendingContacts
+# SpeedFriendingMatcher
 
 A quick script to process data gathered in Google Forms into match results that can be emailed to participants.
 
@@ -9,11 +9,11 @@ A quick script to process data gathered in Google Forms into match results that 
 
 ## Installation Instructions
 
-1. Clone this repo with `git clone https://github.com/DanielRunningen/SpeedFriendingContacts.git`.
+1. Clone this repo with `git clone https://github.com/DanielRunningen/SpeedFriendingMatcher.git`.
 2. Open the new directory and run `pipenv install`.
 3. Run `pipenv shell` to open the new environment.
 4. Make any changes to the `config.json` file, if needed (this includes paths to you input csv and desired output file).
-5. Run `python3 main.py config.json`
+5. Run `python3 match_maker.py config.json`
 
 ## `config.json` Setup
 
