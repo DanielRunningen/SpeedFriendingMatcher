@@ -54,10 +54,10 @@ def main(config: str) -> None:
     # Calculate the matches
     for person in people.values():
         for potential_friend in person.potential_friends:
-            if potential_friend in people.keys()
-                and person.name in people[potential_friend].potential_friends
+            if potential_friend in people.keys() \
+                and person.name in people[potential_friend].potential_friends \
                 and person.name != potential_friend:
-                
+
                 people[person.name].add_mutual_friend(potential_friend)
                 people[potential_friend].add_mutual_friend(person.name)
 
