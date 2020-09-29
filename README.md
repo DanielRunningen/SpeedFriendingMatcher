@@ -17,7 +17,7 @@ A quick script to process data gathered in Google Forms into match results that 
 
 ## `config.json` Setup
 
-`config.json` holds all of the messy text, file paths, and regular expression patterns that might need to be changed on the fly if the input format changes or the desired output needs revision. Below is an example and an explaination for each key.
+`config.json` holds all of the messy text, file paths, and regular expression patterns that might need to be changed on the fly if the input format changes or the desired output needs revision. Below is an example and an explanation for each key.
 
 ```json
 {
@@ -25,7 +25,7 @@ A quick script to process data gathered in Google Forms into match results that 
     "output_path" : "./results.txt",
     "messages" : {
         "matched" : {
-            "pre": "Congradulations, you have matches!",
+            "pre": "Congratulations, you have matches!",
             "post": "\n\n\n-----------------------\n\n\n\n"
         },
         "not_matched" : "Sorry, we didn't find any matches \n\n\n\n-----------------------\n\n\n\n"
@@ -47,11 +47,11 @@ This is the path the output will be placed in. There is no special formatting an
 
 ### `messages`
 
-This section contains all of the plain text that should sorround the match results. There is logic to support two messages, one for participants who do find mutual matches, and another for individuals that find no matches.
+This section contains all of the plain text that should surround the match results. There is logic to support two messages, one for participants who do find mutual matches, and another for individuals that find no matches.
 
 #### `matched`
 
-This hold two seperate texts, `pre` and `post`, that are used to print around the match results.
+This hold two separate texts, `pre` and `post`, that are used to print around the match results.
 
 ##### `pre`
 
@@ -63,7 +63,7 @@ A text string that prints after the match results of each individual.
 
 #### `not_matched`
 
-Place text here to print out messages for individuals who did not recieve any matches.
+Place text here to print out messages for individuals who did not receive any matches.
 
 #### `regex`
 
@@ -75,4 +75,4 @@ This expressions should capture the name of a person in the column headers of th
 
 ##### `contact_methods`
 
-This expression is simply an `or` list of all the contact methods that a participant can give information for in your survey. **Please be sure to include at least `email` so the results can be printed correclty.**
+This expression is simply an `or` list of all the contact methods that a participant can give information for in your survey. **Please be sure to include at least `email` so the results can be printed correctly.**

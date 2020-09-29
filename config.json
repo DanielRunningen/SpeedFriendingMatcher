@@ -3,7 +3,7 @@
     "output_path" : "./results.txt",
     "messages" : {
         "matched" : {
-            "pre": "Congradulations, you have matches!",
+            "pre": "Congratulations, you have matches!",
             "post": "\n\n\n-----------------------\n\n\n\n"
         },
         "not_matched" : "Sorry, we didn't find any matches \n\n\n\n-----------------------\n\n\n\n"
