@@ -4,6 +4,7 @@
 # Omit raw data files and output
 *.csv
 *.txt
+*.json
 
 ### Taken from https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
