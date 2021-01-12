@@ -4,7 +4,7 @@ A quick script to process data gathered in Google Forms into match results that 
 
 ## Requirements
 
-* Python 3.5 or higher
+* Python 3.8 or higher
 * `pip3` and `pipenv`
 
 ## Installation Instructions
