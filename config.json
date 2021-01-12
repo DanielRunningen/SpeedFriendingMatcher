@@ -8,8 +8,10 @@
         },
         "not_matched" : "Sorry, we didn't find any matches \n\n\n\n-----------------------\n\n\n\n"
     },
+    "name_column_header" : "Please copy your name!",
     "regex" : {
         "find_name" : ".*\\[([^\\]]+)\\]",
-        "contact_methods" : "(email|facebook|discord|phone|meetup)"
+        "contact_methods" : "(email|facebook|discord|phone|meetup)",
+        "phone_number": "\\d*\\(?(\\d{3})\\)?[ -]?(\\d{3})[ -]?(\\d{4})"
     }
 }
