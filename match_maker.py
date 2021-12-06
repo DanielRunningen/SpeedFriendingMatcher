@@ -15,7 +15,7 @@ def main(config: str) -> None:
    df = df.fillna("")
 
    # Make the cases consistent for all the names
-   df[config['name_column_header']] = df[config['name_column_header']].lower()
+   df[config['name_column_header']] = df[config['name_column_header']].str.lower()
 
    # Identify methods of contact and people available for matching
    methods_q = dict()
@@ -101,7 +101,7 @@ def main(config: str) -> None:
       for potential_friend in person.potential_friends:
          if potential_friend in people.keys() \
             and person.name in people[potential_friend].potential_friends \
-            and person.name != potential_friend
+            and person.name != potential_friend \
          :
             people[person.name].add_mutual_friend(potential_friend)
             people[potential_friend].add_mutual_friend(person.name)
@@ -123,13 +123,13 @@ def main(config: str) -> None:
          output.write(config['messages']['matched']['post'] + "\n")
       else:
          output.write(config['messages']['not_matched'])
-   
+
    # Close the output file nicely
    output.close()
 
 # Execute the program
 if __name__ == '__main__':
    if len(sys.argv) < 2:
-      sys.stdout.write(f"useage:\tpython3 {sys.argv[0]} config.json\n")
+     sys.stdout.write(f"usage:\tpython3 {sys.argv[0]} config.json\n")
    else:
       main(sys.argv[1])
