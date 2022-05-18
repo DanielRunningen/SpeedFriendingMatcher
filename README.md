@@ -97,7 +97,4 @@ The output will be in the format of `(###) ###-####`.
 
 ## Possible Enhancements for the Future
 
-* Report who did not take the survey.
-* Report how many people did not make any matches.
-* Validate against other forms of malformed data.
-* Make suggestions for non-matching names.
+* Validate against other forms of malformed data besides phone numbers.

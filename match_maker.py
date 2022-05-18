@@ -1,39 +1,74 @@
-from person import Person
-import sys
+from colorama import Fore, init, Style
 import json
-import pandas as pd
-import re
+from pandas import read_csv
+from person import Person
+from re import compile, match
+from sys import argv, exit
 
 def main(config: str) -> None:
+   # Start color output
+   init()
+   print(Style.RESET_ALL, end='')
+
    # Load the configs
-   config_file = open(config, "r")
-   config = json.load(config_file)
-   config_file.close()
+   with open(config, 'r') as f:
+      config = json.load(f)
+
+   # Make sure all the required keys are there
+   for key in ['csv_path', 'name_column_header', 'regex', 'messages']:
+      if 'csv_path' not in config:
+         exit(
+            f'{Fore.RED}{Style.BRIGHT}ERROR{Style.NORMAL}: Missing '
+            f'`{Fore.MAGENTA}{key}{Fore.RED}` key in config file, '
+            f'aborting{Style.RESET_ALL}')
+
+   for k, v in {
+      'find_name': 'regex',
+      'contact_methods': 'regex',
+      'matched': 'messages',
+      'not_matched': 'messages'
+   }.items():
+      if k not in config[v]:
+         exit(
+            f'{Fore.RED}{Style.BRIGHT}ERROR{Style.NORMAL}: Missing '
+            f'`{Fore.MAGENTA}{k}{Fore.RED}` key in the `{Fore.MAGENTA}{v}'
+            f'{Fore.RED}` section of the config, aborting{Style.RESET_ALL}')
+
+   for k in ['pre', 'post']:
+      if k not in config['messages']['matched']:
+         exit(
+            f'{Fore.RED}{Style.BRIGHT}ERROR{Style.NORMAL}: Missing '
+            f'`{Fore.MAGENTA}{k}{Fore.RED}` key in the `{Fore.MAGENTA}matched'
+            f'{Fore.RED}` section of the config, aborting{Style.RESET_ALL}')
 
    # Load in the CSV of response data and remove the n/a values
-   df = pd.read_csv(config['csv_path'])
-   df = df.fillna("")
+   df = read_csv(config['csv_path'], sep='\s*,\s*', engine='python').fillna('')
+
+   if config['name_column_header'] not in df:
+      exit(
+         f'{Fore.RED}{Style.BRIGHT}ERROR{Style.NORMAL}: No column found '
+         f"with the header `{Fore.MAGENTA}{config['name_column_header']}"
+         f'{Fore.RED}`, aborting{Style.RESET_ALL}')
 
    # Make the cases consistent for all the names
-   df[config['name_column_header']] = df[config['name_column_header']].str.lower()
+   df[config['name_column_header']] = \
+      df[config['name_column_header']].str.lower()
 
    # Identify methods of contact and people available for matching
    methods_q = dict()
    friends_q = dict()
    for q in list(df.columns):
-      match = re.match(re.compile(config['regex']['find_name']), q)
-      if match:
-         friends_q[q] = match.group(1).lower()
-         continue
-      match = re.match(
-         re.compile(config['regex']['contact_methods']),
-         q.lower()
-      )
-      if match:
-         methods_q[q] = match.group(1).lower()
-
-      # While I'm here, also strip leading and trailing whitespaces.
-      df[q] = df[q].str.strip()
+      # If it's a name column, add it to the list of possible friends
+      result = match(compile(config['regex']['find_name']), q)
+      if result:
+         friends_q[q] = result.group(1).lower()
+      else: # Otherwise, it's probably a contact method
+         result = match(
+            compile(config['regex']['contact_methods']),
+            q.lower())
+         if result:
+            methods_q[q] = result.group(1).lower()
+      # If it's neither, it can be ignored
 
    # Replace the column headers with more reasonable ones
    df.rename(columns=methods_q, inplace=True)
@@ -45,9 +80,10 @@ def main(config: str) -> None:
 
    # Give some diagnostic data about the survey results
    print(
-      f"There were {len(friends_q)} event participants and {df.shape[0]}",
-      "survey respondants"
-   )
+      f'{Style.BRIGHT}INFO:{Style.NORMAL} There were {Fore.GREEN}'
+      f'{len(friends_q)}{Style.RESET_ALL} event participants and '
+      f'{Fore.GREEN if len(friends_q) == df.shape[0] else Fore.YELLOW}'
+      f'{df.shape[0]}{Style.RESET_ALL} survey respondents.')
 
    # Convert the table data into Person objects
    # Organizing them with their name as their reference point in the
@@ -56,42 +92,44 @@ def main(config: str) -> None:
    for i in df.index:
       # Warn for folks whose names weren't in the column headers and skip them
       #   The won't match with anyone if the name wasn't a column header
-      if df[config['name_column_header']][i] not in friends_q:
+      responder = df[config['name_column_header']][i]
+      if responder not in friends_q:
          print(
-            f"WARN: The name `{df[config['name_column_header']][i]}`",
-            "does not match any names from the list below.",
-            "This person won't be matched!\n",
-            list(friends_q).sort()
-         )
+            f'{Fore.YELLOW}{Style.BRIGHT}WARN:{Style.NORMAL} The name '
+            f'`{Fore.MAGENTA}{responder.title()}{Fore.YELLOW}` does not match '
+            'any names from the form. This person won\'t be matched!\nIs it'
+            f'possible they were one of these people?:\n   {Style.RESET_ALL}-',
+            '\n   - '.join([name.title() for name in sorted(list(friends_q))
+               if responder in name]))
       else: # Their name was in a column, so they should be good
          # Make the new Person object with the validated name
-         person = Person(df[config['name_column_header']][i])
+         person = Person(responder)
          # Add all the contact methods they listed for themselves
          for method in methods_q:
-            if df[method][i] != "":
+            if df[method][i] != '':
                # Everyone writes phone numbers differently, so check that it
                #   will work, then standardize them
-               if method == "phone":
-                  match = re.match(
-                     re.compile(config['regex']['phone_number']),
-                     df[method][i]
-                  )
-                  if match:
+               if method == 'phone':
+                  result = match(
+                     compile(config['regex']['phone_number']),
+                     df[method][i])
+                  if result:
                      person.add_contact_method(
                         method, 
-                        "(" + match.group(1) + ") " + match.group(2) + "-" \
-                           + match.group(3)
-                     )
+                        '(' + result.group(1) + ') ' + result.group(2) + '-' \
+                           + result.group(3))
                   else:
                      print(
-                        f"{person.name.title()} gave malformed contact",
-                        f"information for `{method}`: `{df[method][i]}`"
-                     )
+                        f'{Fore.YELLOW}{Style.BRIGHT}WARN:{Style.NORMAL} '
+                        f'{Fore.MAGENTA}{person.name.title()}{Fore.YELLOW} gave'
+                        f' malformed contact information for `{Fore.MAGENTA}'
+                        f'{method}{Fore.YELLOW}`: `{Fore.MAGENTA}'
+                        f'{df[method][i]}{Fore.YELLOW}`{Style.RESET_ALL}')
                else: # Assume they entered the information correctly
                   person.add_contact_method(method, df[method][i])
          # Save all the names of the people this person likes
          for friend in friends_q:
-            if df[friend][i] == "Yes":
+            if df[friend][i] == 'Yes':
                person.add_potential_friend(friend)
          # Add the person to the dictionary to look-up later
          people[person.name] = person
@@ -106,30 +144,57 @@ def main(config: str) -> None:
             people[person.name].add_mutual_friend(potential_friend)
             people[potential_friend].add_mutual_friend(person.name)
 
+   if 'output_path' in config:
+      filename = config['output_path']
+   else:
+      print(
+         f'{Fore.YELLOW}{Style.BRIGHT}WARN:{Style.NORMAL} No `{Fore.MAGENTA}'
+         f'output_path{Fore.YELLOW}` given in config, sending results to '
+         f'`{Fore.MAGENTA}out.txt{Fore.YELLOW}`{Style.RESET_ALL}')
+      filename = 'out.txt'
+
+   # Prepare to report the people unmatched.
+   unmatched = []
+
    # Prepare the output file
-   output = open(config['output_path'], "w")
+   with open(filename, 'w') as output:
+      # Print the emails
+      for name, person in people.items():
+         output.write(
+            f"***SEND TO: \t{person.contact_methods['email']}\t***\n\n\n")
+         if len(person.mutual_friends) > 0:
+            output.write(f"{config['messages']['matched']['pre']}\n")
+            for friend in person.mutual_friends:
+               output.write(f'\n\n{people[friend].name.title()}\n---\n')
+               for method, handle in people[friend].contact_methods.items():
+                  output.write(f'{method.title()}: {str(handle)}\n')
+            output.write(f"{config['messages']['matched']['post']}\n")
+         else:
+            unmatched.append(name.title())
+            output.write(config['messages']['not_matched'])
 
-   # Print the emails
-   for person in people.values():
-      output.write(
-         "***SEND TO:\t" + person.contact_methods['email'] + "\t***\n\n\n"
-      )
-      if len(person.mutual_friends) > 0:
-         output.write(config['messages']['matched']['pre'] + "\n")
-         for friend in person.mutual_friends:
-            output.write("\n\n" + people[friend].name.title() + "\n---\n")
-            for method, handle in people[friend].contact_methods.items():
-               output.write(method.title() + ": " + str(handle) + "\n")
-         output.write(config['messages']['matched']['post'] + "\n")
-      else:
-         output.write(config['messages']['not_matched'])
+   # Print diagnostic data
+   print(
+      f'{Style.BRIGHT}INFO:{Style.NORMAL} The following people did not take the'
+      f' survey:\n   {Style.RESET_ALL}-',
+      '\n   - '.join([name.title() for name in sorted(list(friends_q))
+         if name not in people]))
 
-   # Close the output file nicely
-   output.close()
+   n = len(unmatched)
+   if n > 0:
+      print(
+         f'{Style.BRIGHT}INFO: {Fore.YELLOW}{n}{Fore.RESET}{Style.NORMAL} '
+         f"{'people were' if n > 1 else 'person was'} not matched:\n   -"
+         f"{Style.RESET_ALL}",
+         '\n   - '.join(sorted(unmatched)))
+   else:
+      print(
+         f'{Style.BRIGHT}INFO:{Style.NORMAL} {Fore.GREEN}Congrats! Everyone had'
+         f' at least one match!{Style.RESET_ALL}')
 
 # Execute the program
 if __name__ == '__main__':
-   if len(sys.argv) < 2:
-     sys.stdout.write(f"usage:\tpython3 {sys.argv[0]} config.json\n")
+   if len(argv) < 2:
+     exit(f'usage:\tpython3 {argv[0]} config.json\n')
    else:
-      main(sys.argv[1])
+      main(argv[1])
