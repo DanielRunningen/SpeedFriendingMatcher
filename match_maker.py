@@ -16,7 +16,7 @@ def main(config: str) -> None:
 
    # Make sure all the required keys are there
    for key in ['csv_path', 'name_column_header', 'regex', 'messages']:
-      if 'csv_path' not in config:
+      if key not in config:
          exit(
             f'{Fore.RED}{Style.BRIGHT}ERROR{Style.NORMAL}: Missing '
             f'`{Fore.MAGENTA}{key}{Fore.RED}` key in config file, '
