@@ -2,7 +2,7 @@ from colorama import Fore, init, Style
 import json
 from pandas import read_csv
 from person import Person
-from re import compile, match
+from re import compile, match, split
 from sys import argv, exit
 
 def main(config: str) -> None:
@@ -42,7 +42,12 @@ def main(config: str) -> None:
             f'{Fore.RED}` section of the config, aborting{Style.RESET_ALL}')
 
    # Load in the CSV of response data and remove the n/a values
-   df = read_csv(config['csv_path'], sep='\s*,\s*', engine='python').fillna('')
+   df = read_csv(
+      config['csv_path'],
+      sep=',',
+      quotechar='"',
+      skipinitialspace=True,
+      engine='python').fillna('')
 
    if config['name_column_header'] not in df:
       exit(
@@ -54,36 +59,35 @@ def main(config: str) -> None:
    df[config['name_column_header']] = \
       df[config['name_column_header']].str.lower()
 
-   # Identify methods of contact and people available for matching
-   methods_q = dict()
-   friends_q = dict()
+   # These forms can get confusing, but columns belong to a couple categories
+   # Primarily, this will find the people columns and contact columns
+   column_categories = ['find_name', 'contact_methods', 'identity_fields', 'interests']
+   column_qs = {k: dict() for k in column_categories}
    for q in list(df.columns):
-      # If it's a name column, add it to the list of possible friends
-      result = match(compile(config['regex']['find_name']), q)
-      if result:
-         friends_q[q] = result.group(1).lower()
-      else: # Otherwise, it's probably a contact method
-         result = match(
-            compile(config['regex']['contact_methods']),
-            q.lower())
-         if result:
-            methods_q[q] = result.group(1).lower()
-      # If it's neither, it can be ignored
+      for c in column_categories:
+         if c in config['regex']:
+            result = match(compile(config['regex'][c]), q.lower())
+            if result:
+               column_qs[c][q] = result.group(1).lower()
+               break
 
-   # Replace the column headers with more reasonable ones
-   df.rename(columns=methods_q, inplace=True)
-   df.rename(columns=friends_q, inplace=True)
+   for c in column_categories:
+      # Replace the column headers with more reasonable ones
+      df.rename(columns=column_qs[c], inplace=True)
+      # Convert the question dictionaries into simple sets
+      column_qs[c] = set(column_qs[c].values())
 
-   # Convert the question dictionaries into simple sets
-   methods_q = set(methods_q.values())
-   friends_q = set(friends_q.values())
+   print(column_qs)
 
    # Give some diagnostic data about the survey results
    print(
       f'{Style.BRIGHT}INFO:{Style.NORMAL} There were {Fore.GREEN}'
-      f'{len(friends_q)}{Style.RESET_ALL} event participants and '
-      f'{Fore.GREEN if len(friends_q) == df.shape[0] else Fore.YELLOW}'
+      f'{len(column_qs["find_name"])}{Style.RESET_ALL} event participants and '
+      f'{Fore.GREEN if len(column_qs["find_name"]) == df.shape[0] else Fore.YELLOW}'
       f'{df.shape[0]}{Style.RESET_ALL} survey respondents.')
+
+   # Fix the name column...
+   df[config['name_column_header']] = df[config['name_column_header']].str.strip()
 
    # Convert the table data into Person objects
    # Organizing them with their name as their reference point in the
@@ -93,19 +97,20 @@ def main(config: str) -> None:
       # Warn for folks whose names weren't in the column headers and skip them
       #   The won't match with anyone if the name wasn't a column header
       responder = df[config['name_column_header']][i]
-      if responder not in friends_q:
+      if responder not in column_qs['find_name']:
          print(
             f'{Fore.YELLOW}{Style.BRIGHT}WARN:{Style.NORMAL} The name '
             f'`{Fore.MAGENTA}{responder.title()}{Fore.YELLOW}` does not match '
-            'any names from the form. This person won\'t be matched!\nIs it'
+            'any names from the form. This person won\'t be matched!\nIs it '
             f'possible they were one of these people?:\n   {Style.RESET_ALL}-',
-            '\n   - '.join([name.title() for name in sorted(list(friends_q))
-               if responder in name]))
+            '\n   - '.join([name.title()
+               for name in sorted(list(column_qs['find_name']))
+                  if responder in name]))
       else: # Their name was in a column, so they should be good
          # Make the new Person object with the validated name
          person = Person(responder)
          # Add all the contact methods they listed for themselves
-         for method in methods_q:
+         for method in column_qs['contact_methods']:
             if df[method][i] != '':
                # Everyone writes phone numbers differently, so check that it
                #   will work, then standardize them
@@ -128,9 +133,20 @@ def main(config: str) -> None:
                else: # Assume they entered the information correctly
                   person.add_contact_method(method, df[method][i])
          # Save all the names of the people this person likes
-         for friend in friends_q:
+         for friend in column_qs['find_name']:
             if df[friend][i] == 'Yes':
                person.add_potential_friend(friend)
+         # Add their identities, if that is what we are doing
+         if 'identity_delim' in config['regex']:
+            for c in column_qs['identity_fields']:
+               person.add_identities(set(split(
+                  compile(config['regex']['identity_delim']),
+                  df[c][i])))
+         # Add interest, if that's a thing.
+         for c in column_qs['interests']:
+            # I know this is ugly, and it needs fixing, just not right now.
+            person.desired_relationship = df[c][i].lower()
+            break
          # Add the person to the dictionary to look-up later
          people[person.name] = person
 
@@ -166,6 +182,14 @@ def main(config: str) -> None:
             output.write(f"{config['messages']['matched']['pre']}\n")
             for friend in person.mutual_friends:
                output.write(f'\n\n{people[friend].name.title()}\n---\n')
+               if len(people[friend].identities) > 0:
+                  output.write('Identities: ' \
+                     + ', '.join(list(people[friend].identities)) + '\n')
+               if people[friend].desired_relationship:
+                  output.write(
+                     f'{people[friend].name.title()} ' \
+                     + 'came to the event because they are interested in '
+                     + f'{people[friend].desired_relationship}.\n---\n')
                for method, handle in people[friend].contact_methods.items():
                   output.write(f'{method.title()}: {str(handle)}\n')
             output.write(f"{config['messages']['matched']['post']}\n")
@@ -177,8 +201,9 @@ def main(config: str) -> None:
    print(
       f'{Style.BRIGHT}INFO:{Style.NORMAL} The following people did not take the'
       f' survey:\n   {Style.RESET_ALL}-',
-      '\n   - '.join([name.title() for name in sorted(list(friends_q))
-         if name not in people]))
+      '\n   - '.join([name.title()
+         for name in sorted(list(column_qs['find_name']))
+            if name not in people]))
 
    n = len(unmatched)
    if n > 0:
