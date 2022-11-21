@@ -47,7 +47,8 @@ def main(config: str) -> None:
       sep=',',
       quotechar='"',
       skipinitialspace=True,
-      engine='python').fillna('')
+      engine='python',
+      encoding='latin1').fillna('')
 
    if config['name_column_header'] not in df:
       exit(
@@ -76,8 +77,6 @@ def main(config: str) -> None:
       df.rename(columns=column_qs[c], inplace=True)
       # Convert the question dictionaries into simple sets
       column_qs[c] = set(column_qs[c].values())
-
-   print(column_qs)
 
    # Give some diagnostic data about the survey results
    print(
