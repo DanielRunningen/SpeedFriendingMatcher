@@ -58,7 +58,7 @@ def main(config: str) -> None:
 
    # Make the cases consistent for all the names
    df[config['name_column_header']] = \
-      df[config['name_column_header']].str.lower()
+      df[config['name_column_header']].str.lower().str.strip()
 
    # These forms can get confusing, but columns belong to a couple categories
    # Primarily, this will find the people columns and contact columns
@@ -69,7 +69,7 @@ def main(config: str) -> None:
          if c in config['regex']:
             result = match(compile(config['regex'][c]), q.lower())
             if result:
-               column_qs[c][q] = result.group(1).lower()
+               column_qs[c][q] = result.group(1).lower().strip()
                break
 
    for c in column_categories:
@@ -200,7 +200,7 @@ def main(config: str) -> None:
    print(
       f'{Style.BRIGHT}INFO:{Style.NORMAL} The following people did not take the'
       f' survey:\n   {Style.RESET_ALL}-',
-      '\n   - '.join([name.title()
+      '\n   - '.join([f'`{name.title()}`'
          for name in sorted(list(column_qs['find_name']))
             if name not in people]))
 
